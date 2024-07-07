@@ -16,8 +16,11 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { SignupValidation } from "@/lib/validation"
+import Loader from "@/components/shared/Loader";
 
 const SignuptForm = () => {
+
+    const isLoading = true;
 
     // 1. Define your form.
     const form = useForm<z.infer<typeof SignupValidation>>({
@@ -28,14 +31,9 @@ const SignuptForm = () => {
     })
 
     // 2. Define a submit handler.
-    function onSubmit(values: z.infer<typeof SignupValidation>) {
-        // Do something with the form values.
-        // ✅ This will be type-safe and validated.
-        console.log(values)
-    }
-
     const handleSignup = async (user: z.infer<typeof SignupValidation>) => {
-
+        //create user
+        //const newUser = await createUserAccount(user)
     }
 
     return (
@@ -110,7 +108,15 @@ const SignuptForm = () => {
                     />
 
                     <Button type="submit" className="shad-button_primary">
-                        Sign Up
+                        {
+                            isLoading ? (
+                                <div className="flex flex-center gap-2">
+                                    <Loader /> Loading...
+                                </div>
+                            ) : (
+                                "Sign Up"
+                            )
+                        }
                     </Button>
 
                     <p className="text-small-regular text-light-2 text-center mt-2">
