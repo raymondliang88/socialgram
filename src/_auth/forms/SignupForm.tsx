@@ -17,9 +17,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { SignupValidation } from "@/lib/validation"
 import Loader from "@/components/shared/Loader";
+import { createUserAccount } from "@/lib/appwrite/api";
+import { useToast } from "@/components/ui/use-toast";
 
 const SignuptForm = () => {
-
+    const { toast } = useToast();
     const isLoading = true;
 
     // 1. Define your form.
@@ -32,8 +34,46 @@ const SignuptForm = () => {
 
     // 2. Define a submit handler.
     const handleSignup = async (user: z.infer<typeof SignupValidation>) => {
-        //create user
-        //const newUser = await createUserAccount(user)
+        try {
+            const newUser = await createUserAccount(user);
+
+            if (!newUser) {
+                toast({ title: "Sign up failed. Please try again.", });
+
+                return;
+            }
+
+            // const session = await signInAccount({
+            //     email: user.email,
+            //     password: user.password,
+            // });
+
+            // if (!session) {
+            //     toast({ title: "Something went wrong. Please login your new account", });
+
+            //     navigate("/sign-in");
+
+            //     return;
+            // }
+
+            // const isLoggedIn = await checkAuthUser();
+
+            // if (isLoggedIn) {
+            //     form.reset();
+
+            //     navigate("/");
+            // } else {
+            //     toast({ title: "Login failed. Please try again.", });
+
+            //     return;
+            // }
+        } catch (error: any) {
+            console.log({ error });
+            toast({ title: error.message, });
+
+        }
+
+
     }
 
     return (
