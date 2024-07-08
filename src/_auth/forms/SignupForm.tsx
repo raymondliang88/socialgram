@@ -1,38 +1,38 @@
-"use client"
+import * as z from "zod";
+import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod";
 
-import { Button } from "@/components/ui/button"
-import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { SignupValidation } from "@/lib/validation"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import Loader from "@/components/shared/Loader";
-import { createUserAccount } from "@/lib/appwrite/api";
 import { useToast } from "@/components/ui/use-toast";
 
-const SignuptForm = () => {
-    const { toast } = useToast();
-    const isLoading = true;
+import { useCreateUserAccount, useSignInAccount } from "@/lib/react-query/queries";
+import { SignupValidation } from "@/lib/validation";
+import { useUserContext } from "@/context/AuthContext";
 
-    // 1. Define your form.
+const SignupForm = () => {
+    const { toast } = useToast();
+    const navigate = useNavigate();
+    const { checkAuthUser, isLoading: isUserLoading } = useUserContext();
+
     const form = useForm<z.infer<typeof SignupValidation>>({
         resolver: zodResolver(SignupValidation),
         defaultValues: {
+            name: "",
             username: "",
+            email: "",
+            password: "",
         },
-    })
+    });
 
-    // 2. Define a submit handler.
+    // Queries
+    const { mutateAsync: createUserAccount, isPending: isCreatingAccount } = useCreateUserAccount();
+    const { mutateAsync: signInAccount, isPending: isSigningInUser } = useSignInAccount();
+
+    // Handler
     const handleSignup = async (user: z.infer<typeof SignupValidation>) => {
         try {
             const newUser = await createUserAccount(user);
@@ -43,38 +43,34 @@ const SignuptForm = () => {
                 return;
             }
 
-            // const session = await signInAccount({
-            //     email: user.email,
-            //     password: user.password,
-            // });
+            const session = await signInAccount({
+                email: user.email,
+                password: user.password,
+            });
 
-            // if (!session) {
-            //     toast({ title: "Something went wrong. Please login your new account", });
+            if (!session) {
+                toast({ title: "Something went wrong. Please login your new account", });
 
-            //     navigate("/sign-in");
+                navigate("/sign-in");
 
-            //     return;
-            // }
+                return;
+            }
 
-            // const isLoggedIn = await checkAuthUser();
+            const isLoggedIn = await checkAuthUser();
 
-            // if (isLoggedIn) {
-            //     form.reset();
+            if (isLoggedIn) {
+                form.reset();
 
-            //     navigate("/");
-            // } else {
-            //     toast({ title: "Login failed. Please try again.", });
+                navigate("/");
+            } else {
+                toast({ title: "Login failed. Please try again.", });
 
-            //     return;
-            // }
-        } catch (error: any) {
+                return;
+            }
+        } catch (error) {
             console.log({ error });
-            toast({ title: error.message, });
-
         }
-
-
-    }
+    };
 
     return (
         <Form {...form}>
@@ -148,15 +144,13 @@ const SignuptForm = () => {
                     />
 
                     <Button type="submit" className="shad-button_primary">
-                        {
-                            isLoading ? (
-                                <div className="flex flex-center gap-2">
-                                    <Loader /> Loading...
-                                </div>
-                            ) : (
-                                "Sign Up"
-                            )
-                        }
+                        {isCreatingAccount || isSigningInUser || isUserLoading ? (
+                            <div className="flex-center gap-2">
+                                <Loader /> Loading...
+                            </div>
+                        ) : (
+                            "Sign Up"
+                        )}
                     </Button>
 
                     <p className="text-small-regular text-light-2 text-center mt-2">
@@ -170,7 +164,7 @@ const SignuptForm = () => {
                 </form>
             </div>
         </Form>
-    )
-}
+    );
+};
 
-export default SignuptForm
+export default SignupForm;
